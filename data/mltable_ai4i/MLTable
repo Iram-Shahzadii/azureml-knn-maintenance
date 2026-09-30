@@ -1,0 +1,14 @@
+paths:
+  - file: ./ai4i_clean.csv
+transformations:
+  - read_delimited:
+      delimiter: ','
+      encoding: utf8
+      header: all_files_same_headers
+  - convert_column_types:
+      - columns: [air_temp_k, process_temp_k, torque_nm]
+        column_type: float
+      - columns: [rpm, tool_wear_min, machine_failure]
+        column_type: int
+      - columns: [type]
+        column_type: string

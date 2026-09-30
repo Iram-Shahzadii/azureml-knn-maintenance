@@ -1,0 +1,464 @@
+{
+  "cells": [
+    {
+      "cell_type": "code",
+      "source": [
+        "%pip install ucimlrepo --quiet"
+      ],
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": "Note: you may need to restart the kernel to use updated packages.\n"
+        }
+      ],
+      "execution_count": 1,
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import pandas as pd\n",
+        "from ucimlrepo import fetch_ucirepo\n",
+        "\n",
+        "ds = fetch_ucirepo(id=601)  # 601 = AI4I 2020 Predictive Maintenance\n",
+        "df_raw = pd.concat([ds.data.features, ds.data.targets], axis=1)\n",
+        "print(\"Shape:\", df_raw.shape)\n",
+        "print(\"Columns:\", df_raw.columns.tolist())\n",
+        "df_raw.head()"
+      ],
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": "Shape: (10000, 12)\nColumns: ['Type', 'Air temperature', 'Process temperature', 'Rotational speed', 'Torque', 'Tool wear', 'Machine failure', 'TWF', 'HDF', 'PWF', 'OSF', 'RNF']\n"
+        },
+        {
+          "output_type": "execute_result",
+          "execution_count": 2,
+          "data": {
+            "text/plain": "  Type  Air temperature  Process temperature  Rotational speed  Torque  \\\n0    M            298.1                308.6              1551    42.8   \n1    L            298.2                308.7              1408    46.3   \n2    L            298.1                308.5              1498    49.4   \n3    L            298.2                308.6              1433    39.5   \n4    L            298.2                308.7              1408    40.0   \n\n   Tool wear  Machine failure  TWF  HDF  PWF  OSF  RNF  \n0          0                0    0    0    0    0    0  \n1          3                0    0    0    0    0    0  \n2          5                0    0    0    0    0    0  \n3          7                0    0    0    0    0    0  \n4          9                0    0    0    0    0    0  ",
+            "text/html": "<div>\n<style scoped>\n    .dataframe tbody tr th:only-of-type {\n        vertical-align: middle;\n    }\n\n    .dataframe tbody tr th {\n        vertical-align: top;\n    }\n\n    .dataframe thead th {\n        text-align: right;\n    }\n</style>\n<table border=\"1\" class=\"dataframe\">\n  <thead>\n    <tr style=\"text-align: right;\">\n      <th></th>\n      <th>Type</th>\n      <th>Air temperature</th>\n      <th>Process temperature</th>\n      <th>Rotational speed</th>\n      <th>Torque</th>\n      <th>Tool wear</th>\n      <th>Machine failure</th>\n      <th>TWF</th>\n      <th>HDF</th>\n      <th>PWF</th>\n      <th>OSF</th>\n      <th>RNF</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th>0</th>\n      <td>M</td>\n      <td>298.1</td>\n      <td>308.6</td>\n      <td>1551</td>\n      <td>42.8</td>\n      <td>0</td>\n      <td>0</td>\n      <td>0</td>\n      <td>0</td>\n      <td>0</td>\n      <td>0</td>\n      <td>0</td>\n    </tr>\n    <tr>\n      <th>1</th>\n      <td>L</td>\n      <td>298.2</td>\n      <td>308.7</td>\n      <td>1408</td>\n      <td>46.3</td>\n      <td>3</td>\n      <td>0</td>\n      <td>0</td>\n      <td>0</td>\n      <td>0</td>\n      <td>0</td>\n      <td>0</td>\n    </tr>\n    <tr>\n      <th>2</th>\n      <td>L</td>\n      <td>298.1</td>\n      <td>308.5</td>\n      <td>1498</td>\n      <td>49.4</td>\n      <td>5</td>\n      <td>0</td>\n      <td>0</td>\n      <td>0</td>\n      <td>0</td>\n      <td>0</td>\n      <td>0</td>\n    </tr>\n    <tr>\n      <th>3</th>\n      <td>L</td>\n      <td>298.2</td>\n      <td>308.6</td>\n      <td>1433</td>\n      <td>39.5</td>\n      <td>7</td>\n      <td>0</td>\n      <td>0</td>\n      <td>0</td>\n      <td>0</td>\n      <td>0</td>\n      <td>0</td>\n    </tr>\n    <tr>\n      <th>4</th>\n      <td>L</td>\n      <td>298.2</td>\n      <td>308.7</td>\n      <td>1408</td>\n      <td>40.0</td>\n      <td>9</td>\n      <td>0</td>\n      <td>0</td>\n      <td>0</td>\n      <td>0</td>\n      <td>0</td>\n      <td>0</td>\n    </tr>\n  </tbody>\n</table>\n</div>"
+          },
+          "metadata": {}
+        }
+      ],
+      "execution_count": 2,
+      "metadata": {
+        "gather": {
+          "logged": 1790720202095
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Some versions include units, e.g. \"Air temperature [K]\". Remove them.\n",
+        "df = df_raw.copy()\n",
+        "df.columns = [c.split(\" [\")[0].strip() for c in df.columns]\n",
+        "\n",
+        "rename_map = {\n",
+        "    \"Type\": \"type\",\n",
+        "    \"Air temperature\": \"air_temp_k\",\n",
+        "    \"Process temperature\": \"process_temp_k\",\n",
+        "    \"Rotational speed\": \"rpm\",\n",
+        "    \"Torque\": \"torque_nm\",\n",
+        "    \"Tool wear\": \"tool_wear_min\",\n",
+        "    \"Machine failure\": \"machine_failure\",\n",
+        "}\n",
+        "df = df.rename(columns=rename_map)[list(rename_map.values())]\n",
+        "\n",
+        "# Drops the failure-mode columns TWF, HDF, PWF, OSF, RNF.\n",
+        "# Those failure modes ARE the failure, so keeping them would leak the answer.\n",
+        "df.head()"
+      ],
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "execution_count": 3,
+          "data": {
+            "text/plain": "  type  air_temp_k  process_temp_k   rpm  torque_nm  tool_wear_min  \\\n0    M       298.1           308.6  1551       42.8              0   \n1    L       298.2           308.7  1408       46.3              3   \n2    L       298.1           308.5  1498       49.4              5   \n3    L       298.2           308.6  1433       39.5              7   \n4    L       298.2           308.7  1408       40.0              9   \n\n   machine_failure  \n0                0  \n1                0  \n2                0  \n3                0  \n4                0  ",
+            "text/html": "<div>\n<style scoped>\n    .dataframe tbody tr th:only-of-type {\n        vertical-align: middle;\n    }\n\n    .dataframe tbody tr th {\n        vertical-align: top;\n    }\n\n    .dataframe thead th {\n        text-align: right;\n    }\n</style>\n<table border=\"1\" class=\"dataframe\">\n  <thead>\n    <tr style=\"text-align: right;\">\n      <th></th>\n      <th>type</th>\n      <th>air_temp_k</th>\n      <th>process_temp_k</th>\n      <th>rpm</th>\n      <th>torque_nm</th>\n      <th>tool_wear_min</th>\n      <th>machine_failure</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th>0</th>\n      <td>M</td>\n      <td>298.1</td>\n      <td>308.6</td>\n      <td>1551</td>\n      <td>42.8</td>\n      <td>0</td>\n      <td>0</td>\n    </tr>\n    <tr>\n      <th>1</th>\n      <td>L</td>\n      <td>298.2</td>\n      <td>308.7</td>\n      <td>1408</td>\n      <td>46.3</td>\n      <td>3</td>\n      <td>0</td>\n    </tr>\n    <tr>\n      <th>2</th>\n      <td>L</td>\n      <td>298.1</td>\n      <td>308.5</td>\n      <td>1498</td>\n      <td>49.4</td>\n      <td>5</td>\n      <td>0</td>\n    </tr>\n    <tr>\n      <th>3</th>\n      <td>L</td>\n      <td>298.2</td>\n      <td>308.6</td>\n      <td>1433</td>\n      <td>39.5</td>\n      <td>7</td>\n      <td>0</td>\n    </tr>\n    <tr>\n      <th>4</th>\n      <td>L</td>\n      <td>298.2</td>\n      <td>308.7</td>\n      <td>1408</td>\n      <td>40.0</td>\n      <td>9</td>\n      <td>0</td>\n    </tr>\n  </tbody>\n</table>\n</div>"
+          },
+          "metadata": {}
+        }
+      ],
+      "execution_count": 3,
+      "metadata": {
+        "gather": {
+          "logged": 1790720259385
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "print(\"Missing values per column:\")\n",
+        "print(df.isna().sum())\n",
+        "print(\"\\nData types:\")\n",
+        "print(df.dtypes)\n",
+        "print(\"\\nTarget balance (share of rows):\")\n",
+        "print(df[\"machine_failure\"].value_counts(normalize=True).round(4))"
+      ],
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": "Missing values per column:\ntype               0\nair_temp_k         0\nprocess_temp_k     0\nrpm                0\ntorque_nm          0\ntool_wear_min      0\nmachine_failure    0\ndtype: int64\n\nData types:\ntype                object\nair_temp_k         float64\nprocess_temp_k     float64\nrpm                  int64\ntorque_nm          float64\ntool_wear_min        int64\nmachine_failure      int64\ndtype: object\n\nTarget balance (share of rows):\n0    0.9661\n1    0.0339\nName: machine_failure, dtype: float64\n"
+        }
+      ],
+      "execution_count": 4,
+      "metadata": {
+        "gather": {
+          "logged": 1790720273237
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df.to_csv(\"../data/ai4i_clean.csv\", index=False)\n",
+        "print(\"Saved\", df.shape, \"to data/ai4i_clean.csv\")"
+      ],
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": "Saved (10000, 7) to data/ai4i_clean.csv\n"
+        }
+      ],
+      "execution_count": 5,
+      "metadata": {
+        "gather": {
+          "logged": 1790720292569
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from azure.ai.ml import MLClient\n",
+        "from azure.identity import DefaultAzureCredential\n",
+        "\n",
+        "SUBSCRIPTION_ID = \"f3366df5-0550-438c-b31e-e437667ba4b0\"\n",
+        "RESOURCE_GROUP = \"rg-mlab1-iram15\"\n",
+        "WORKSPACE = \"mlw-lab1-iram15\"\n",
+        "\n",
+        "ml_client = MLClient(DefaultAzureCredential(), SUBSCRIPTION_ID, RESOURCE_GROUP, WORKSPACE)\n",
+        "print(\"Connected to:\", ml_client.workspace_name)"
+      ],
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": "Connected to: mlw-lab1-iram15\n"
+        }
+      ],
+      "execution_count": 6,
+      "metadata": {
+        "gather": {
+          "logged": 1790720400081
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from azure.ai.ml.entities import Data\n",
+        "from azure.ai.ml.constants import AssetTypes\n",
+        "\n",
+        "csv_asset = Data(\n",
+        "    name=\"ai4i-maintenance-csv\",\n",
+        "    version=\"1\",\n",
+        "    type=AssetTypes.URI_FILE,\n",
+        "    path=\"../data/ai4i_clean.csv\",\n",
+        "    description=\"AI4I 2020 predictive maintenance, cleaned: 6 features + machine_failure\",\n",
+        ")\n",
+        "csv_asset = ml_client.data.create_or_update(csv_asset)\n",
+        "print(\"Registered:\", csv_asset.name, \"version\", csv_asset.version)"
+      ],
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": "\r\u001b[32mUploading ai4i_clean.csv\u001b[32m (< 1 MB): 0.00B [00:00, ?B/s]\r\u001b[32mUploading ai4i_clean.csv\u001b[32m (< 1 MB): 100%|██████████| 295k/295k [00:00<00:00, 10.5MB/s]\n\u001b[39m\n\n"
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": "Registered: ai4i-maintenance-csv version 1\n"
+        }
+      ],
+      "execution_count": 7,
+      "metadata": {
+        "gather": {
+          "logged": 1790720418496
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from azure.ai.ml.entities import Data\n",
+        "from azure.ai.ml.constants import AssetTypes\n",
+        "\n",
+        "csv_asset = Data(\n",
+        "    name=\"ai4i-maintenance-csv\",\n",
+        "    version=\"1\",\n",
+        "    type=AssetTypes.URI_FILE,\n",
+        "    path=\"../data/ai4i_clean.csv\",\n",
+        "    description=\"AI4I 2020 predictive maintenance, cleaned: 6 features + machine_failure\",\n",
+        ")\n",
+        "csv_asset = ml_client.data.create_or_update(csv_asset)\n",
+        "print(\"Registered:\", csv_asset.name, \"version\", csv_asset.version)"
+      ],
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "HttpResponseError",
+          "evalue": "(UserError) A data version with this name and version already exists. If you are trying to create a new data version, use a different name or version. If you are trying to update an existing data version, the existing asset's data uri cannot be changed. Only tags, description, and isArchived can be updated.\nCode: UserError\nMessage: A data version with this name and version already exists. If you are trying to create a new data version, use a different name or version. If you are trying to update an existing data version, the existing asset's data uri cannot be changed. Only tags, description, and isArchived can be updated.\nAdditional Information:Type: ComponentName\nInfo: {\n    \"value\": \"managementfrontend\"\n}Type: Correlation\nInfo: {\n    \"value\": {\n        \"operation\": \"22b71af61f9db8275e3868c69ff20bfb\",\n        \"request\": \"bfe8ba3c75dc5ad3\"\n    }\n}Type: Environment\nInfo: {\n    \"value\": \"eastus\"\n}Type: Location\nInfo: {\n    \"value\": \"eastus\"\n}Type: Time\nInfo: {\n    \"value\": \"2026-09-29T22:20:31.7357439+00:00\"\n}Type: InnerError\nInfo: {\n    \"value\": {\n        \"code\": \"Immutable\",\n        \"innerError\": {\n            \"code\": \"DataVersionPropertyImmutable\",\n            \"innerError\": null\n        }\n    }\n}Type: MessageFormat\nInfo: {\n    \"value\": \"A data version with this name and version already exists. If you are trying to create a new data version, use a different name or version. If you are trying to update an existing data version, the existing asset's {property} cannot be changed. Only tags, description, and isArchived can be updated.\"\n}Type: MessageParameters\nInfo: {\n    \"value\": {\n        \"property\": \"data uri\"\n    }\n}",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mHttpResponseError\u001b[0m                         Traceback (most recent call last)",
+            "\u001b[0;32m/tmp/ipykernel_40721/630282654.py\u001b[0m in \u001b[0;36m?\u001b[0;34m()\u001b[0m\n\u001b[1;32m      7\u001b[0m     \u001b[0mtype\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mAssetTypes\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mURI_FILE\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      8\u001b[0m     \u001b[0mpath\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;34m\"../data/ai4i_clean.csv\"\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      9\u001b[0m     \u001b[0mdescription\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;34m\"AI4I 2020 predictive maintenance, cleaned: 6 features + machine_failure\"\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     10\u001b[0m )\n\u001b[0;32m---> 11\u001b[0;31m \u001b[0mcsv_asset\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mml_client\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mdata\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mcreate_or_update\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mcsv_asset\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m     12\u001b[0m \u001b[0mprint\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m\"Registered:\"\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mcsv_asset\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mname\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m\"version\"\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mcsv_asset\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mversion\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/anaconda/envs/azureml_py310_sdkv2/lib/python3.10/site-packages/azure/ai/ml/_telemetry/activity.py\u001b[0m in \u001b[0;36m?\u001b[0;34m(*args, **kwargs)\u001b[0m\n\u001b[1;32m    284\u001b[0m                 \u001b[0;32mwith\u001b[0m \u001b[0mtracer\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mstart_as_current_span\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mACTIVITY_SPAN\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    285\u001b[0m                     with log_activity(\n\u001b[1;32m    286\u001b[0m                         \u001b[0mlogger\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mpackage_logger\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mactivity_name\u001b[0m \u001b[0;32mor\u001b[0m \u001b[0mf\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m__name__\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mactivity_type\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mcustom_dimensions\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    287\u001b[0m                     ):\n\u001b[0;32m--> 288\u001b[0;31m                         \u001b[0;32mreturn\u001b[0m \u001b[0mf\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m*\u001b[0m\u001b[0margs\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m**\u001b[0m\u001b[0mkwargs\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m    289\u001b[0m             \u001b[0;32melif\u001b[0m \u001b[0mhasattr\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mlogger\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m\"package_logger\"\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    290\u001b[0m                 \u001b[0;32mwith\u001b[0m \u001b[0mlog_activity\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mlogger\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mpackage_logger\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mactivity_name\u001b[0m \u001b[0;32mor\u001b[0m \u001b[0mf\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m__name__\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mactivity_type\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mcustom_dimensions\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    291\u001b[0m                     \u001b[0;32mreturn\u001b[0m \u001b[0mf\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m*\u001b[0m\u001b[0margs\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m**\u001b[0m\u001b[0mkwargs\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/anaconda/envs/azureml_py310_sdkv2/lib/python3.10/site-packages/azure/ai/ml/operations/_data_operations.py\u001b[0m in \u001b[0;36m?\u001b[0;34m(self, data)\u001b[0m\n\u001b[1;32m    445\u001b[0m                         \u001b[0mtartget\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mErrorTarget\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mDATA\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    446\u001b[0m                         \u001b[0mno_personal_data_message\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mCHANGED_ASSET_PATH_MSG_NO_PERSONAL_DATA\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    447\u001b[0m                         \u001b[0merror_category\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mErrorCategory\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mUSER_ERROR\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    448\u001b[0m                     ) from ex\n\u001b[0;32m--> 449\u001b[0;31m             \u001b[0;32mraise\u001b[0m \u001b[0mex\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m",
+            "\u001b[0;32m/anaconda/envs/azureml_py310_sdkv2/lib/python3.10/site-packages/azure/ai/ml/operations/_data_operations.py\u001b[0m in \u001b[0;36m?\u001b[0;34m(self, data)\u001b[0m\n\u001b[1;32m    445\u001b[0m                         \u001b[0mtartget\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mErrorTarget\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mDATA\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    446\u001b[0m                         \u001b[0mno_personal_data_message\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mCHANGED_ASSET_PATH_MSG_NO_PERSONAL_DATA\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    447\u001b[0m                         \u001b[0merror_category\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mErrorCategory\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mUSER_ERROR\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    448\u001b[0m                     ) from ex\n\u001b[0;32m--> 449\u001b[0;31m             \u001b[0;32mraise\u001b[0m \u001b[0mex\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m",
+            "\u001b[0;32m/anaconda/envs/azureml_py310_sdkv2/lib/python3.10/site-packages/azure/core/tracing/decorator.py\u001b[0m in \u001b[0;36m?\u001b[0;34m(*args, **kwargs)\u001b[0m\n\u001b[1;32m    134\u001b[0m                 \u001b[0;32mwith\u001b[0m \u001b[0mchange_context\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mpassed_in_parent\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    135\u001b[0m                     \u001b[0;32mwith\u001b[0m \u001b[0mspan_impl_type\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mname\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mname\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mkind\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mkind\u001b[0m\u001b[0;34m)\u001b[0m \u001b[0;32mas\u001b[0m \u001b[0mspan\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    136\u001b[0m                         \u001b[0;32mfor\u001b[0m \u001b[0mkey\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mvalue\u001b[0m \u001b[0;32min\u001b[0m \u001b[0mspan_attributes\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mitems\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    137\u001b[0m                             \u001b[0mspan\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0madd_attribute\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mkey\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mvalue\u001b[0m\u001b[0;34m)\u001b[0m  \u001b[0;31m# type: ignore\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 138\u001b[0;31m                         \u001b[0;32mreturn\u001b[0m \u001b[0mfunc\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m*\u001b[0m\u001b[0margs\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m**\u001b[0m\u001b[0mkwargs\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m    139\u001b[0m             \u001b[0;32melse\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    140\u001b[0m                 \u001b[0;31m# Native path\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    141\u001b[0m                 \u001b[0mconfig\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0;34m{\u001b[0m\u001b[0;34m}\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/anaconda/envs/azureml_py310_sdkv2/lib/python3.10/site-packages/azure/ai/ml/_restclient/arm_ml_service/operations/_operations.py\u001b[0m in \u001b[0;36m?\u001b[0;34m(self, resource_group_name, workspace_name, name, version, body, **kwargs)\u001b[0m\n\u001b[1;32m  13240\u001b[0m             error = _failsafe_deserialize(\n\u001b[1;32m  13241\u001b[0m                 \u001b[0m_models\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mErrorResponse\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m  13242\u001b[0m                 \u001b[0mresponse\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m  13243\u001b[0m             )\n\u001b[0;32m> 13244\u001b[0;31m             \u001b[0;32mraise\u001b[0m \u001b[0mHttpResponseError\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mresponse\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mresponse\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mmodel\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0merror\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0merror_format\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mARMErrorFormat\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m  13245\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m  13246\u001b[0m         \u001b[0;32mif\u001b[0m \u001b[0m_stream\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m  13247\u001b[0m             \u001b[0mdeserialized\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mresponse\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0miter_bytes\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mHttpResponseError\u001b[0m: (UserError) A data version with this name and version already exists. If you are trying to create a new data version, use a different name or version. If you are trying to update an existing data version, the existing asset's data uri cannot be changed. Only tags, description, and isArchived can be updated.\nCode: UserError\nMessage: A data version with this name and version already exists. If you are trying to create a new data version, use a different name or version. If you are trying to update an existing data version, the existing asset's data uri cannot be changed. Only tags, description, and isArchived can be updated.\nAdditional Information:Type: ComponentName\nInfo: {\n    \"value\": \"managementfrontend\"\n}Type: Correlation\nInfo: {\n    \"value\": {\n        \"operation\": \"22b71af61f9db8275e3868c69ff20bfb\",\n        \"request\": \"bfe8ba3c75dc5ad3\"\n    }\n}Type: Environment\nInfo: {\n    \"value\": \"eastus\"\n}Type: Location\nInfo: {\n    \"value\": \"eastus\"\n}Type: Time\nInfo: {\n    \"value\": \"2026-09-29T22:20:31.7357439+00:00\"\n}Type: InnerError\nInfo: {\n    \"value\": {\n        \"code\": \"Immutable\",\n        \"innerError\": {\n            \"code\": \"DataVersionPropertyImmutable\",\n            \"innerError\": null\n        }\n    }\n}Type: MessageFormat\nInfo: {\n    \"value\": \"A data version with this name and version already exists. If you are trying to create a new data version, use a different name or version. If you are trying to update an existing data version, the existing asset's {property} cannot be changed. Only tags, description, and isArchived can be updated.\"\n}Type: MessageParameters\nInfo: {\n    \"value\": {\n        \"property\": \"data uri\"\n    }\n}"
+          ]
+        }
+      ],
+      "execution_count": 8,
+      "metadata": {
+        "gather": {
+          "logged": 1790720433275
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import os, shutil\n",
+        "\n",
+        "os.makedirs(\"../data/mltable_ai4i\", exist_ok=True)\n",
+        "shutil.copy(\"../data/ai4i_clean.csv\", \"../data/mltable_ai4i/ai4i_clean.csv\")\n",
+        "\n",
+        "mltable_yaml = \"\"\"paths:\n",
+        "  - file: ./ai4i_clean.csv\n",
+        "transformations:\n",
+        "  - read_delimited:\n",
+        "      delimiter: ','\n",
+        "      encoding: utf8\n",
+        "      header: all_files_same_headers\n",
+        "  - convert_column_types:\n",
+        "      - columns: [air_temp_k, process_temp_k, torque_nm]\n",
+        "        column_type: float\n",
+        "      - columns: [rpm, tool_wear_min, machine_failure]\n",
+        "        column_type: integer\n",
+        "      - columns: [type]\n",
+        "        column_type: string\n",
+        "\"\"\"\n",
+        "with open(\"../data/mltable_ai4i/MLTable\", \"w\") as f:\n",
+        "    f.write(mltable_yaml)\n",
+        "\n",
+        "print(os.listdir(\"../data/mltable_ai4i\"))"
+      ],
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": "['ai4i_clean.csv', 'MLTable']\n"
+        }
+      ],
+      "execution_count": 9,
+      "metadata": {
+        "gather": {
+          "logged": 1790720991376
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from azure.ai.ml.entities import Data\n",
+        "from azure.ai.ml.constants import AssetTypes\n",
+        "\n",
+        "table_asset = Data(\n",
+        "    name=\"ai4i-maintenance-table\",\n",
+        "    version=\"1\",\n",
+        "    type=AssetTypes.MLTABLE,\n",
+        "    path=\"../data/mltable_ai4i\",\n",
+        "    description=\"AI4I 2020 predictive maintenance as MLTable for AutoML\",\n",
+        ")\n",
+        "table_asset = ml_client.data.create_or_update(table_asset)\n",
+        "print(\"Registered:\", table_asset.name, \"version\", table_asset.version)"
+      ],
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "MlException",
+          "evalue": "\n\u001b[37m\n\u001b[30m\n1) One or more fields are invalid\u001b[39m\u001b[39m\n\nDetails: \n\n\u001b[31m(x) 'integer' is not one of ['boolean', 'float', 'string', 'int', 'stream_info']\nInvalid MLTable metadata schema:\n{\n  \"type\": \"string\",\n  \"enum\": [\n    \"boolean\",\n    \"float\",\n    \"string\",\n    \"int\",\n    \"stream_info\"\n  ]\n}\u001b[39m\n\nResolutions: \n1) Double-check that all specified parameters are of the correct types and formats prescribed by the Data schema.\nIf using the CLI, you can also check the full log in debug mode for more details by adding --debug to the end of your command\n\nAdditional Resources: The easiest way to author a yaml specification file is using IntelliSense and auto-completion Azure ML VS code extension provides: \u001b[36mhttps://code.visualstudio.com/docs/datascience/azure-machine-learning.\u001b[39m To set up VS Code, visit \u001b[36mhttps://learn.microsoft.com/azure/machine-learning/how-to-setup-vs-code\u001b[39m\n",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mValidationException\u001b[0m                       Traceback (most recent call last)",
+            "File \u001b[0;32m/anaconda/envs/azureml_py310_sdkv2/lib/python3.10/site-packages/azure/ai/ml/operations/_data_operations.py:380\u001b[0m, in \u001b[0;36mDataOperations.create_or_update\u001b[0;34m(self, data)\u001b[0m\n\u001b[1;32m    371\u001b[0m     sas_uri \u001b[38;5;241m=\u001b[39m get_sas_uri_for_registry_asset(\n\u001b[1;32m    372\u001b[0m         service_client\u001b[38;5;241m=\u001b[39m\u001b[38;5;28mself\u001b[39m\u001b[38;5;241m.\u001b[39m_registry_service_client,\n\u001b[1;32m    373\u001b[0m         name\u001b[38;5;241m=\u001b[39mname,\n\u001b[0;32m   (...)\u001b[0m\n\u001b[1;32m    377\u001b[0m         body\u001b[38;5;241m=\u001b[39mget_asset_body_for_registry_storage(\u001b[38;5;28mself\u001b[39m\u001b[38;5;241m.\u001b[39m_registry_name, \u001b[38;5;124m\"\u001b[39m\u001b[38;5;124mdata\u001b[39m\u001b[38;5;124m\"\u001b[39m, name, version),\n\u001b[1;32m    378\u001b[0m     )\n\u001b[0;32m--> 380\u001b[0m referenced_uris \u001b[38;5;241m=\u001b[39m \u001b[38;5;28;43mself\u001b[39;49m\u001b[38;5;241;43m.\u001b[39;49m\u001b[43m_validate\u001b[49m\u001b[43m(\u001b[49m\u001b[43mdata\u001b[49m\u001b[43m)\u001b[49m\n\u001b[1;32m    381\u001b[0m \u001b[38;5;28;01mif\u001b[39;00m referenced_uris:\n",
+            "File \u001b[0;32m/anaconda/envs/azureml_py310_sdkv2/lib/python3.10/site-packages/azure/ai/ml/_telemetry/activity.py:288\u001b[0m, in \u001b[0;36mmonitor_with_activity.<locals>.monitor.<locals>.wrapper\u001b[0;34m(*args, **kwargs)\u001b[0m\n\u001b[1;32m    285\u001b[0m         \u001b[38;5;28;01mwith\u001b[39;00m log_activity(\n\u001b[1;32m    286\u001b[0m             logger\u001b[38;5;241m.\u001b[39mpackage_logger, activity_name \u001b[38;5;129;01mor\u001b[39;00m f\u001b[38;5;241m.\u001b[39m\u001b[38;5;18m__name__\u001b[39m, activity_type, custom_dimensions\n\u001b[1;32m    287\u001b[0m         ):\n\u001b[0;32m--> 288\u001b[0m             \u001b[38;5;28;01mreturn\u001b[39;00m \u001b[43mf\u001b[49m\u001b[43m(\u001b[49m\u001b[38;5;241;43m*\u001b[39;49m\u001b[43margs\u001b[49m\u001b[43m,\u001b[49m\u001b[43m \u001b[49m\u001b[38;5;241;43m*\u001b[39;49m\u001b[38;5;241;43m*\u001b[39;49m\u001b[43mkwargs\u001b[49m\u001b[43m)\u001b[49m\n\u001b[1;32m    289\u001b[0m \u001b[38;5;28;01melif\u001b[39;00m \u001b[38;5;28mhasattr\u001b[39m(logger, \u001b[38;5;124m\"\u001b[39m\u001b[38;5;124mpackage_logger\u001b[39m\u001b[38;5;124m\"\u001b[39m):\n",
+            "File \u001b[0;32m/anaconda/envs/azureml_py310_sdkv2/lib/python3.10/site-packages/azure/ai/ml/operations/_data_operations.py:583\u001b[0m, in \u001b[0;36mDataOperations._validate\u001b[0;34m(self, data)\u001b[0m\n\u001b[1;32m    582\u001b[0m \u001b[38;5;28;01mif\u001b[39;00m mltable_metadata_schema \u001b[38;5;129;01mand\u001b[39;00m \u001b[38;5;129;01mnot\u001b[39;00m data\u001b[38;5;241m.\u001b[39m_skip_validation:\n\u001b[0;32m--> 583\u001b[0m     \u001b[43mvalidate_mltable_metadata\u001b[49m\u001b[43m(\u001b[49m\n\u001b[1;32m    584\u001b[0m \u001b[43m        \u001b[49m\u001b[43mmltable_metadata_dict\u001b[49m\u001b[38;5;241;43m=\u001b[39;49m\u001b[43mmetadata_contents\u001b[49m\u001b[43m,\u001b[49m\n\u001b[1;32m    585\u001b[0m \u001b[43m        \u001b[49m\u001b[43mmltable_schema\u001b[49m\u001b[38;5;241;43m=\u001b[39;49m\u001b[43mmltable_metadata_schema\u001b[49m\u001b[43m,\u001b[49m\n\u001b[1;32m    586\u001b[0m \u001b[43m    \u001b[49m\u001b[43m)\u001b[49m\n\u001b[1;32m    587\u001b[0m \u001b[38;5;28;01mreturn\u001b[39;00m cast(Optional[List[\u001b[38;5;28mstr\u001b[39m]], metadata\u001b[38;5;241m.\u001b[39mreferenced_uris())\n",
+            "File \u001b[0;32m/anaconda/envs/azureml_py310_sdkv2/lib/python3.10/site-packages/azure/ai/ml/_utils/_data_utils.py:76\u001b[0m, in \u001b[0;36mvalidate_mltable_metadata\u001b[0;34m(mltable_metadata_dict, mltable_schema)\u001b[0m\n\u001b[1;32m     70\u001b[0m msg \u001b[38;5;241m=\u001b[39m INVALID_MLTABLE_METADATA_SCHEMA_ERROR\u001b[38;5;241m.\u001b[39mformat(\n\u001b[1;32m     71\u001b[0m     jsonSchemaErrorPath\u001b[38;5;241m=\u001b[39merr_path,\n\u001b[1;32m     72\u001b[0m     jsonSchemaMessage\u001b[38;5;241m=\u001b[39merror\u001b[38;5;241m.\u001b[39mmessage,\n\u001b[1;32m     73\u001b[0m     invalidMLTableMsg\u001b[38;5;241m=\u001b[39mINVALID_MLTABLE_METADATA_SCHEMA_MSG,\n\u001b[1;32m     74\u001b[0m     invalidSchemaSnippet\u001b[38;5;241m=\u001b[39mjson\u001b[38;5;241m.\u001b[39mdumps(error\u001b[38;5;241m.\u001b[39mschema, indent\u001b[38;5;241m=\u001b[39m\u001b[38;5;241m2\u001b[39m),\n\u001b[1;32m     75\u001b[0m )\n\u001b[0;32m---> 76\u001b[0m \u001b[38;5;28;01mraise\u001b[39;00m ValidationException(\n\u001b[1;32m     77\u001b[0m     message\u001b[38;5;241m=\u001b[39mmsg,\n\u001b[1;32m     78\u001b[0m     no_personal_data_message\u001b[38;5;241m=\u001b[39mINVALID_MLTABLE_METADATA_SCHEMA_MSG,\n\u001b[1;32m     79\u001b[0m     error_type\u001b[38;5;241m=\u001b[39mValidationErrorType\u001b[38;5;241m.\u001b[39mINVALID_VALUE,\n\u001b[1;32m     80\u001b[0m     target\u001b[38;5;241m=\u001b[39mErrorTarget\u001b[38;5;241m.\u001b[39mDATA,\n\u001b[1;32m     81\u001b[0m     error_category\u001b[38;5;241m=\u001b[39mErrorCategory\u001b[38;5;241m.\u001b[39mUSER_ERROR,\n\u001b[1;32m     82\u001b[0m )\n",
+            "\u001b[0;31mValidationException\u001b[0m: 'integer' is not one of ['boolean', 'float', 'string', 'int', 'stream_info']\nInvalid MLTable metadata schema:\n{\n  \"type\": \"string\",\n  \"enum\": [\n    \"boolean\",\n    \"float\",\n    \"string\",\n    \"int\",\n    \"stream_info\"\n  ]\n}",
+            "\nDuring handling of the above exception, another exception occurred:\n",
+            "\u001b[0;31mMlException\u001b[0m                               Traceback (most recent call last)",
+            "Cell \u001b[0;32mIn[10], line 11\u001b[0m\n\u001b[1;32m      2\u001b[0m \u001b[38;5;28;01mfrom\u001b[39;00m\u001b[38;5;250m \u001b[39m\u001b[38;5;21;01mazure\u001b[39;00m\u001b[38;5;21;01m.\u001b[39;00m\u001b[38;5;21;01mai\u001b[39;00m\u001b[38;5;21;01m.\u001b[39;00m\u001b[38;5;21;01mml\u001b[39;00m\u001b[38;5;21;01m.\u001b[39;00m\u001b[38;5;21;01mconstants\u001b[39;00m\u001b[38;5;250m \u001b[39m\u001b[38;5;28;01mimport\u001b[39;00m AssetTypes\n\u001b[1;32m      4\u001b[0m table_asset \u001b[38;5;241m=\u001b[39m Data(\n\u001b[1;32m      5\u001b[0m     name\u001b[38;5;241m=\u001b[39m\u001b[38;5;124m\"\u001b[39m\u001b[38;5;124mai4i-maintenance-table\u001b[39m\u001b[38;5;124m\"\u001b[39m,\n\u001b[1;32m      6\u001b[0m     version\u001b[38;5;241m=\u001b[39m\u001b[38;5;124m\"\u001b[39m\u001b[38;5;124m1\u001b[39m\u001b[38;5;124m\"\u001b[39m,\n\u001b[0;32m   (...)\u001b[0m\n\u001b[1;32m      9\u001b[0m     description\u001b[38;5;241m=\u001b[39m\u001b[38;5;124m\"\u001b[39m\u001b[38;5;124mAI4I 2020 predictive maintenance as MLTable for AutoML\u001b[39m\u001b[38;5;124m\"\u001b[39m,\n\u001b[1;32m     10\u001b[0m )\n\u001b[0;32m---> 11\u001b[0m table_asset \u001b[38;5;241m=\u001b[39m \u001b[43mml_client\u001b[49m\u001b[38;5;241;43m.\u001b[39;49m\u001b[43mdata\u001b[49m\u001b[38;5;241;43m.\u001b[39;49m\u001b[43mcreate_or_update\u001b[49m\u001b[43m(\u001b[49m\u001b[43mtable_asset\u001b[49m\u001b[43m)\u001b[49m\n\u001b[1;32m     12\u001b[0m \u001b[38;5;28mprint\u001b[39m(\u001b[38;5;124m\"\u001b[39m\u001b[38;5;124mRegistered:\u001b[39m\u001b[38;5;124m\"\u001b[39m, table_asset\u001b[38;5;241m.\u001b[39mname, \u001b[38;5;124m\"\u001b[39m\u001b[38;5;124mversion\u001b[39m\u001b[38;5;124m\"\u001b[39m, table_asset\u001b[38;5;241m.\u001b[39mversion)\n",
+            "File \u001b[0;32m/anaconda/envs/azureml_py310_sdkv2/lib/python3.10/site-packages/azure/ai/ml/_telemetry/activity.py:288\u001b[0m, in \u001b[0;36mmonitor_with_activity.<locals>.monitor.<locals>.wrapper\u001b[0;34m(*args, **kwargs)\u001b[0m\n\u001b[1;32m    284\u001b[0m     \u001b[38;5;28;01mwith\u001b[39;00m tracer\u001b[38;5;241m.\u001b[39mstart_as_current_span(ACTIVITY_SPAN):\n\u001b[1;32m    285\u001b[0m         \u001b[38;5;28;01mwith\u001b[39;00m log_activity(\n\u001b[1;32m    286\u001b[0m             logger\u001b[38;5;241m.\u001b[39mpackage_logger, activity_name \u001b[38;5;129;01mor\u001b[39;00m f\u001b[38;5;241m.\u001b[39m\u001b[38;5;18m__name__\u001b[39m, activity_type, custom_dimensions\n\u001b[1;32m    287\u001b[0m         ):\n\u001b[0;32m--> 288\u001b[0m             \u001b[38;5;28;01mreturn\u001b[39;00m \u001b[43mf\u001b[49m\u001b[43m(\u001b[49m\u001b[38;5;241;43m*\u001b[39;49m\u001b[43margs\u001b[49m\u001b[43m,\u001b[49m\u001b[43m \u001b[49m\u001b[38;5;241;43m*\u001b[39;49m\u001b[38;5;241;43m*\u001b[39;49m\u001b[43mkwargs\u001b[49m\u001b[43m)\u001b[49m\n\u001b[1;32m    289\u001b[0m \u001b[38;5;28;01melif\u001b[39;00m \u001b[38;5;28mhasattr\u001b[39m(logger, \u001b[38;5;124m\"\u001b[39m\u001b[38;5;124mpackage_logger\u001b[39m\u001b[38;5;124m\"\u001b[39m):\n\u001b[1;32m    290\u001b[0m     \u001b[38;5;28;01mwith\u001b[39;00m log_activity(logger\u001b[38;5;241m.\u001b[39mpackage_logger, activity_name \u001b[38;5;129;01mor\u001b[39;00m f\u001b[38;5;241m.\u001b[39m\u001b[38;5;18m__name__\u001b[39m, activity_type, custom_dimensions):\n",
+            "File \u001b[0;32m/anaconda/envs/azureml_py310_sdkv2/lib/python3.10/site-packages/azure/ai/ml/operations/_data_operations.py:439\u001b[0m, in \u001b[0;36mDataOperations.create_or_update\u001b[0;34m(self, data)\u001b[0m\n\u001b[1;32m    437\u001b[0m \u001b[38;5;28;01mexcept\u001b[39;00m \u001b[38;5;167;01mException\u001b[39;00m \u001b[38;5;28;01mas\u001b[39;00m ex:\n\u001b[1;32m    438\u001b[0m     \u001b[38;5;28;01mif\u001b[39;00m \u001b[38;5;28misinstance\u001b[39m(ex, (ValidationException, SchemaValidationError)):\n\u001b[0;32m--> 439\u001b[0m         \u001b[43mlog_and_raise_error\u001b[49m\u001b[43m(\u001b[49m\u001b[43mex\u001b[49m\u001b[43m)\u001b[49m\n\u001b[1;32m    440\u001b[0m     \u001b[38;5;28;01melif\u001b[39;00m \u001b[38;5;28misinstance\u001b[39m(ex, HttpResponseError):\n\u001b[1;32m    441\u001b[0m         \u001b[38;5;66;03m# service side raises an exception if we attempt to update an existing asset's asset path\u001b[39;00m\n\u001b[1;32m    442\u001b[0m         \u001b[38;5;28;01mif\u001b[39;00m \u001b[38;5;28mstr\u001b[39m(ex) \u001b[38;5;241m==\u001b[39m ASSET_PATH_ERROR:\n",
+            "File \u001b[0;32m/anaconda/envs/azureml_py310_sdkv2/lib/python3.10/site-packages/azure/ai/ml/_exception_helper.py:337\u001b[0m, in \u001b[0;36mlog_and_raise_error\u001b[0;34m(error, debug, yaml_operation)\u001b[0m\n\u001b[1;32m    334\u001b[0m \u001b[38;5;28;01melse\u001b[39;00m:\n\u001b[1;32m    335\u001b[0m     \u001b[38;5;28;01mraise\u001b[39;00m error\n\u001b[0;32m--> 337\u001b[0m \u001b[38;5;28;01mraise\u001b[39;00m MlException(message\u001b[38;5;241m=\u001b[39mformatted_error, no_personal_data_message\u001b[38;5;241m=\u001b[39mformatted_error)\n",
+            "\u001b[0;31mMlException\u001b[0m: \n\u001b[37m\n\u001b[30m\n1) One or more fields are invalid\u001b[39m\u001b[39m\n\nDetails: \n\n\u001b[31m(x) 'integer' is not one of ['boolean', 'float', 'string', 'int', 'stream_info']\nInvalid MLTable metadata schema:\n{\n  \"type\": \"string\",\n  \"enum\": [\n    \"boolean\",\n    \"float\",\n    \"string\",\n    \"int\",\n    \"stream_info\"\n  ]\n}\u001b[39m\n\nResolutions: \n1) Double-check that all specified parameters are of the correct types and formats prescribed by the Data schema.\nIf using the CLI, you can also check the full log in debug mode for more details by adding --debug to the end of your command\n\nAdditional Resources: The easiest way to author a yaml specification file is using IntelliSense and auto-completion Azure ML VS code extension provides: \u001b[36mhttps://code.visualstudio.com/docs/datascience/azure-machine-learning.\u001b[39m To set up VS Code, visit \u001b[36mhttps://learn.microsoft.com/azure/machine-learning/how-to-setup-vs-code\u001b[39m\n"
+          ]
+        }
+      ],
+      "execution_count": 10,
+      "metadata": {
+        "gather": {
+          "logged": 1790721038323
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "mltable_yaml = \"\"\"paths:\n",
+        "  - file: ./ai4i_clean.csv\n",
+        "transformations:\n",
+        "  - read_delimited:\n",
+        "      delimiter: ','\n",
+        "      encoding: utf8\n",
+        "      header: all_files_same_headers\n",
+        "  - convert_column_types:\n",
+        "      - columns: [air_temp_k, process_temp_k, torque_nm]\n",
+        "        column_type: float\n",
+        "      - columns: [rpm, tool_wear_min, machine_failure]\n",
+        "        column_type: int\n",
+        "      - columns: [type]\n",
+        "        column_type: string\n",
+        "\"\"\"\n",
+        "with open(\"../data/mltable_ai4i/MLTable\", \"w\") as f:\n",
+        "    f.write(mltable_yaml)\n",
+        "\n",
+        "print(open(\"../data/mltable_ai4i/MLTable\").read())"
+      ],
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": "paths:\n  - file: ./ai4i_clean.csv\ntransformations:\n  - read_delimited:\n      delimiter: ','\n      encoding: utf8\n      header: all_files_same_headers\n  - convert_column_types:\n      - columns: [air_temp_k, process_temp_k, torque_nm]\n        column_type: float\n      - columns: [rpm, tool_wear_min, machine_failure]\n        column_type: int\n      - columns: [type]\n        column_type: string\n\n"
+        }
+      ],
+      "execution_count": 11,
+      "metadata": {
+        "gather": {
+          "logged": 1790721126582
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from azure.ai.ml.entities import Data\n",
+        "from azure.ai.ml.constants import AssetTypes\n",
+        "\n",
+        "table_asset = Data(\n",
+        "    name=\"ai4i-maintenance-table\",\n",
+        "    version=\"1\",\n",
+        "    type=AssetTypes.MLTABLE,\n",
+        "    path=\"../data/mltable_ai4i\",\n",
+        "    description=\"AI4I 2020 predictive maintenance as MLTable for AutoML\",\n",
+        ")\n",
+        "table_asset = ml_client.data.create_or_update(table_asset)\n",
+        "print(\"Registered:\", table_asset.name, \"version\", table_asset.version)"
+      ],
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": "\rUploading mltable_ai4i (0.3 MBs):   0%|          | 0/295336 [00:00<?, ?it/s]\rUploading mltable_ai4i (0.3 MBs): 100%|██████████| 295336/295336 [00:00<00:00, 7800363.76it/s]\n\n\n"
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": "Registered: ai4i-maintenance-table version 1\n"
+        }
+      ],
+      "execution_count": 12,
+      "metadata": {
+        "gather": {
+          "logged": 1790721177400
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "cd ~/cloudfiles/code/Users/*/azureml-knn-maintenance"
+      ],
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": "[Errno 2] No such file or directory: '/home/azureuser/cloudfiles/code/Users/*/azureml-knn-maintenance'\n/mnt/batch/tasks/shared/LS_root/mounts/clusters/ci-iram15-lab1/code/Users/iramshahzadishahzadi892/azureml-knn-maintenance/notebooks\n"
+        }
+      ],
+      "execution_count": 13,
+      "metadata": {
+        "gather": {
+          "logged": 1790721694465
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "outputs": [],
+      "execution_count": null,
+      "metadata": {}
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "name": "python310-sdkv2",
+      "language": "python",
+      "display_name": "Python 3.10 - SDK v2"
+    },
+    "language_info": {
+      "name": "python",
+      "version": "3.10.21",
+      "mimetype": "text/x-python",
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "pygments_lexer": "ipython3",
+      "nbconvert_exporter": "python",
+      "file_extension": ".py"
+    },
+    "kernel_info": {
+      "name": "python310-sdkv2"
+    },
+    "microsoft": {
+      "ms_spell_check": {
+        "ms_spell_check_language": "en"
+      },
+      "host": {
+        "AzureML": {
+          "notebookHasBeenCompleted": true
+        }
+      }
+    },
+    "nteract": {
+      "version": "nteract-front-end@1.0.0"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 2
+}
